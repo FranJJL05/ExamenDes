@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  # Servidor de Aplicaciones PHP
+  app:
+    build: .
+    container_name: examen-app
+    volumes:
+      - ./backend:/var/www/html
+    networks:
+      - internal-net
+
+  # Servidor Web Nginx (Proxy Inverso)
+  web:
+    image: nginx:latest
+    container_name: examen-web
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Configuración de Nginx
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      # Certificados SSL (Fallback para autofirmados)
+      - ./certs:/etc/nginx/certs:ro
+      # Mapeamos la carpeta de Certbot para SSL real
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      # Volumen compartido para el Frontend
+      - ./frontend:/usr/share/nginx/html:ro
+    networks:
+      - internal-net
+
+networks:
+  internal-net:
+    driver: bridge

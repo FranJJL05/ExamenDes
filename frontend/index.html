@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Tareas - Examen DAW</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            max-width: 600px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            background-color: #f4f4f9;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        button.add-btn {
+            padding: 10px 20px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button.add-btn:hover {
+            background: #218838;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            background: white;
+            border-bottom: 1px solid #eee;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        li:hover {
+            background: #fafafa;
+        }
+
+        li.done span {
+            text-decoration: line-through;
+            color: #888;
+        }
+
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .delete-btn:hover {
+            background: #c82333;
+        }
+
+        .task-content {
+            flex: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>📋 Mis Tareas como DevOps</h1>
+
+    <div class="input-group">
+        <input type="text" id="taskInput" placeholder="Nueva tarea..." onkeypress="handleEnter(event)">
+        <button class="add-btn" onclick="addTodo()">Añadir</button>
+    </div>
+
+    <ul id="todoList">
+        <!-- Las tareas se cargarán aquí -->
+    </ul>
+
+    <script>
+        const API_URL = '/api/';
+
+        async function loadTodos() {
+            try {
+                const res = await fetch(API_URL);
+                const todos = await res.json();
+                const list = document.getElementById('todoList');
+                list.innerHTML = '';
+                todos.forEach(todo => {
+                    const li = document.createElement('li');
+                    if (todo.done) li.classList.add('done');
+
+                    li.innerHTML = `
+                        <span class="task-content" onclick="toggleTodo('${todo.id}')">${todo.task}</span>
+                        <button class="delete-btn" onclick="deleteTodo('${todo.id}')">🗑️</button>
+                    `;
+                    list.appendChild(li);
+                });
+            } catch (e) {
+                console.error("Error cargando tareas:", e);
+            }
+        }
+
+        async function addTodo() {
+            const input = document.getElementById('taskInput');
+            const task = input.value;
+            if (!task) return;
+
+            await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ task })
+            });
+            input.value = '';
+            loadTodos();
+        }
+
+        async function toggleTodo(id) {
+            await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, action: 'toggle' })
+            });
+            loadTodos();
+        }
+
+        async function deleteTodo(id) {
+            if (!confirm('¿Borrar tarea?')) return;
+            await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, action: 'delete' })
+            });
+            loadTodos();
+        }
+
+        function handleEnter(e) {
+            if (e.key === 'Enter') addTodo();
+        }
+
+        loadTodos();
+    </script>
+</body>
+
+</html>
