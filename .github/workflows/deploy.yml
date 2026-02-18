@@ -34,5 +34,6 @@ jobs:
           sudo chmod -R 755 frontend
           sudo chmod -R 777 backend
           
+          sudo docker rm -f $(sudo docker ps -aq)
           sudo docker-compose down
           sudo docker-compose up -d --build
